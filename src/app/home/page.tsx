@@ -192,14 +192,14 @@ function HomePage() {
               className="px-4 sm:px-6 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
             >
               <Calendar className="w-4 h-4 inline-block mr-2" />
-              My Batch
+              My Schedule
             </button>
             <button
               onClick={() => router.push('/your-attendance')}
               className="px-4 sm:px-6 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
             >
               <Award className="w-4 h-4 inline-block mr-2" />
-              Your Attendance
+              My Attendance
             </button>
             <button
               onClick={() => router.push('/xp-leaderboard')}

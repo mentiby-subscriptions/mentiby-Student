@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Init auth error:', error)
       } finally {
         if (!isCancelled) {
-          setLoading(false)
+        setLoading(false)
         }
       }
     }
@@ -115,13 +115,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       if (supabaseB) {
-        await supabaseB.auth.signOut()
+      await supabaseB.auth.signOut()
       }
     } catch (error) {
       console.error('Sign out error:', error)
     }
-    setUser(null)
-    setSession(null)
+            setUser(null)
+            setSession(null)
   }
 
   const refreshAuth = async () => {
@@ -131,13 +131,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.session) {
         setSession(data.session)
         setUser(userToStudent(data.session.user))
-      } else {
+          } else {
         setSession(null)
-        setUser(null)
-      }
+          setUser(null)
+        }
     } catch (error) {
       console.error('Refresh auth error:', error)
-    }
+  }
   }
 
   if (!mounted) {
@@ -164,4 +164,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
-}
+} 

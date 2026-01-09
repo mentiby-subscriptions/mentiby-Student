@@ -196,7 +196,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           {error && (
             <div className="relative mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl animate-in slide-in-from-top-2 duration-200">
               <div className="flex items-center gap-3 mb-2">
-                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
                 <p className="text-red-400 text-sm font-medium">{error}</p>
               </div>
               {fieldErrors.length > 0 && (
@@ -315,23 +315,23 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
               </div>
 
               {/* Email */}
-              <div>
+            <div>
                 <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-                  Email Address
-                </label>
+                Email Address
+              </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
-                  </div>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                     className="block w-full pl-12 pr-4 py-3.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all duration-200"
                     placeholder="student@example.com"
-                  />
+                />
                 </div>
               </div>
 
@@ -437,4 +437,4 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       </div>
     </div>
   )
-}
+} 

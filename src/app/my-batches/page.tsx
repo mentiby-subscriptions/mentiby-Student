@@ -25,14 +25,16 @@ interface Session {
   date: string
   day: string
   time: string
-  subject_name: string
-  subject_topic?: string
-  session_type?: string
-  teams_meeting_link?: string
-  session_material?: string
-  session_recording?: string
-  week_number?: number
-  session_number?: number
+  subject: string
+  topic?: string
+  sessionType?: string
+  meetingLink?: string
+  sessionMaterial?: string
+  sessionRecording?: string
+  weekNumber?: number
+  sessionNumber?: number
+  tableName?: string
+  batchName?: string
 }
 
 function MyBatchesContent() {
@@ -43,6 +45,7 @@ function MyBatchesContent() {
   const [batches, setBatches] = useState<Batch[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
   
   // Calendar state
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null)
@@ -54,6 +57,7 @@ function MyBatchesContent() {
     if (!user?.email) {
       setError('No email found in session')
       setLoading(false)
+      setInitialLoadComplete(true)
       return
     }
 
@@ -66,14 +70,41 @@ function MyBatchesContent() {
 
       if (!response.ok) {
         setError(data.error || 'Failed to fetch batches')
+        setLoading(false)
+        setInitialLoadComplete(true)
         return
       }
 
-      setBatches(data.batches || [])
+      const fetchedBatches = data.batches || []
+      setBatches(fetchedBatches)
+      
+      // If only one batch, auto-select it and fetch sessions before showing anything
+      if (fetchedBatches.length === 1) {
+        setSelectedBatch(fetchedBatches[0])
+        setCurrentMonth(new Date())
+        // Don't set loading false yet - wait for sessions to load
+        try {
+          const sessionsResponse = await fetch(
+            `/api/student/sessions?cohortType=${encodeURIComponent(fetchedBatches[0].cohortType)}&cohortNumber=${encodeURIComponent(fetchedBatches[0].cohortNumber)}&days=730&offset=-365`
+          )
+          const sessionsData = await sessionsResponse.json()
+          if (sessionsResponse.ok) {
+            setSessions(sessionsData.sessions || [])
+          }
+        } catch (err) {
+          console.error('Error fetching sessions:', err)
+        }
+        setLoading(false)
+        setInitialLoadComplete(true)
+      } else {
+        // Multiple batches - show batch selection
+        setLoading(false)
+        setInitialLoadComplete(true)
+      }
     } catch (err: any) {
       setError(err.message || 'Something went wrong')
-    } finally {
       setLoading(false)
+      setInitialLoadComplete(true)
     }
   }
 
@@ -81,7 +112,7 @@ function MyBatchesContent() {
     setLoadingSessions(true)
     try {
       const response = await fetch(
-        `/api/student/sessions?cohortType=${encodeURIComponent(batch.cohortType)}&cohortNumber=${encodeURIComponent(batch.cohortNumber)}&days=90&offset=-30`
+        `/api/student/sessions?cohortType=${encodeURIComponent(batch.cohortType)}&cohortNumber=${encodeURIComponent(batch.cohortNumber)}&days=730&offset=-365`
       )
       const data = await response.json()
       if (response.ok) {
@@ -101,7 +132,8 @@ function MyBatchesContent() {
   }, [user?.email])
 
   useEffect(() => {
-    if (selectedBatch) {
+    // Only fetch sessions on batch change if initial load is complete (user selected a batch manually)
+    if (selectedBatch && initialLoadComplete && batches.length > 1) {
       fetchSessions(selectedBatch)
     }
   }, [selectedBatch])
@@ -173,6 +205,70 @@ function MyBatchesContent() {
     router.push('/session')
   }
 
+  // Get session type colors
+  const getSessionTypeColors = (sessionType: string | undefined, isPast: boolean) => {
+    if (isPast) {
+      return {
+        bg: 'bg-slate-700/30 hover:bg-slate-700/50',
+        border: 'border-slate-600/20',
+        text: 'text-slate-400',
+        dot: 'text-slate-500'
+      }
+    }
+    
+    switch (sessionType?.toLowerCase()) {
+      case 'live session':
+        return {
+          bg: 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30',
+          border: 'border-emerald-500/20 hover:border-emerald-500/40',
+          text: 'text-emerald-300',
+          dot: 'text-emerald-400/70'
+        }
+      case 'self paced':
+        return {
+          bg: 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30',
+          border: 'border-blue-500/20 hover:border-blue-500/40',
+          text: 'text-blue-300',
+          dot: 'text-blue-400/70'
+        }
+      case 'project':
+        return {
+          bg: 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30',
+          border: 'border-purple-500/20 hover:border-purple-500/40',
+          text: 'text-purple-300',
+          dot: 'text-purple-400/70'
+        }
+      case 'assignment':
+        return {
+          bg: 'bg-gradient-to-r from-amber-500/20 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30',
+          border: 'border-amber-500/20 hover:border-amber-500/40',
+          text: 'text-amber-300',
+          dot: 'text-amber-400/70'
+        }
+      case 'contest':
+        return {
+          bg: 'bg-gradient-to-r from-orange-500/20 to-red-500/20 hover:from-orange-500/30 hover:to-red-500/30',
+          border: 'border-orange-500/20 hover:border-orange-500/40',
+          text: 'text-orange-300',
+          dot: 'text-orange-400/70'
+        }
+      case 'doubt session':
+        return {
+          bg: 'bg-gradient-to-r from-rose-500/20 to-pink-500/20 hover:from-rose-500/30 hover:to-pink-500/30',
+          border: 'border-rose-500/20 hover:border-rose-500/40',
+          text: 'text-rose-300',
+          dot: 'text-rose-400/70'
+        }
+      default:
+        return {
+          bg: 'bg-gradient-to-r from-slate-500/20 to-gray-500/20 hover:from-slate-500/30 hover:to-gray-500/30',
+          border: 'border-slate-500/20 hover:border-slate-500/40',
+          text: 'text-slate-300',
+          dot: 'text-slate-400/70'
+        }
+    }
+  }
+
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentMonth)
     const firstDay = getFirstDayOfMonth(currentMonth)
@@ -196,25 +292,25 @@ function MyBatchesContent() {
       days.push(
         <div
           key={day}
-          className={`h-24 sm:h-32 rounded-lg border transition-all duration-200 overflow-hidden ${
+          className={`h-24 sm:h-32 rounded-lg border-2 transition-all duration-200 overflow-hidden ${
             todayClass
-              ? 'border-emerald-500/50 bg-emerald-500/10'
+              ? 'border-amber-400 bg-amber-500/15 ring-1 ring-amber-400/30'
               : hasSession
               ? isPast 
                 ? 'border-slate-600/30 bg-slate-800/30'
-                : 'border-teal-500/30 bg-teal-500/5 hover:border-teal-500/50'
+                : 'border-cyan-500/40 bg-cyan-500/5 hover:border-cyan-400/60'
               : 'border-white/5 bg-slate-900/30 hover:bg-slate-800/30'
           }`}
         >
           {/* Day number */}
           <div className="p-1.5 sm:p-2 flex justify-between items-start">
             <span className={`text-xs sm:text-sm font-medium ${
-              todayClass ? 'text-emerald-400' : hasSession ? (isPast ? 'text-slate-500' : 'text-teal-400') : 'text-slate-500'
+              todayClass ? 'text-amber-400 font-bold' : hasSession ? (isPast ? 'text-slate-500' : 'text-cyan-400') : 'text-slate-500'
             }`}>
               {day}
             </span>
             {todayClass && (
-              <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500 text-white rounded-full font-medium">
+              <span className="text-[10px] px-1.5 py-0.5 bg-amber-500 text-black rounded-full font-bold">
                 Today
               </span>
             )}
@@ -222,20 +318,19 @@ function MyBatchesContent() {
 
           {/* Sessions */}
           <div className="px-1.5 sm:px-2 space-y-1 overflow-y-auto max-h-16 sm:max-h-20 scrollbar-hide">
-            {daySessions.map((session, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSessionClick(session)}
-                className={`w-full text-left px-1.5 sm:px-2 py-1 rounded text-[10px] sm:text-xs truncate transition-colors border ${
-                  isPast
-                    ? 'bg-slate-700/30 text-slate-400 border-slate-600/20 hover:bg-slate-700/50'
-                    : 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 text-emerald-300 border-emerald-500/20 hover:border-emerald-500/40'
-                }`}
-              >
-                <span className="font-medium">{session.time?.slice(0, 5)}</span>
-                <span className={`ml-1 hidden sm:inline ${isPast ? 'text-slate-500' : 'text-emerald-400/70'}`}>• {session.subject_name}</span>
-              </button>
-            ))}
+            {daySessions.map((session, idx) => {
+              const colors = getSessionTypeColors(session.sessionType, isPast)
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleSessionClick(session)}
+                  className={`w-full text-left px-1.5 sm:px-2 py-1 rounded text-[10px] sm:text-xs truncate transition-colors border ${colors.bg} ${colors.border} ${colors.text}`}
+                >
+                  <span className="font-medium">{session.time?.slice(0, 5)}</span>
+                  <span className={`ml-1 ${colors.dot}`}>• {session.subject}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
       )
@@ -259,6 +354,27 @@ function MyBatchesContent() {
     )
   }
 
+  // Show loading screen until initial load is complete
+  if (loading || !initialLoadComplete) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center">
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/20 via-slate-950 to-teal-950/20" />
+        </div>
+        <div className="relative z-10 mb-6">
+          <div className="w-24 h-24 rounded-full border-4 border-transparent border-t-emerald-500 border-r-teal-500 animate-spin" />
+          <div className="absolute inset-2 w-[80px] h-[80px] rounded-full border-4 border-transparent border-b-cyan-400 border-l-green-500 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/50 animate-pulse">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </div>
+        <p className="relative z-10 text-slate-400">Loading your batches...</p>
+      </div>
+    )
+  }
+
   // Calendar View (when a batch is selected)
   if (selectedBatch) {
     return (
@@ -275,12 +391,14 @@ function MyBatchesContent() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <button
-                  onClick={handleBackToBatches}
-                  className="p-2 hover:bg-white/5 rounded-lg transition-colors text-slate-400 hover:text-white"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
+                {batches.length > 1 && (
+                  <button
+                    onClick={handleBackToBatches}
+                    className="p-2 hover:bg-white/5 rounded-lg transition-colors text-slate-400 hover:text-white"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                )}
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
                   <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
@@ -325,14 +443,14 @@ function MyBatchesContent() {
                 className="px-4 sm:px-6 py-3 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400 bg-emerald-500/5 whitespace-nowrap"
               >
                 <Calendar className="w-4 h-4 inline-block mr-2" />
-                My Batches
+                My Schedule
               </button>
               <button
                 onClick={() => router.push('/your-attendance')}
                 className="px-4 sm:px-6 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
               >
                 <Award className="w-4 h-4 inline-block mr-2" />
-                Your Attendance
+                My Attendance
               </button>
               <button
                 onClick={() => router.push('/xp-leaderboard')}
@@ -373,11 +491,11 @@ function MyBatchesContent() {
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-4 sm:gap-6 mb-6 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-emerald-500/30 border border-emerald-500/50" />
+              <div className="w-3 h-3 rounded bg-amber-500/30 border-2 border-amber-400" />
               <span className="text-slate-400">Today</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-teal-500/30 border border-teal-500/50" />
+              <div className="w-3 h-3 rounded bg-cyan-500/20 border-2 border-cyan-500/50" />
               <span className="text-slate-400">Upcoming Class</span>
             </div>
             <div className="flex items-center gap-2">
@@ -416,13 +534,15 @@ function MyBatchesContent() {
                   }).length} sessions scheduled
                 </p>
               </div>
-              <button
-                onClick={handleBackToBatches}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-xl transition-colors text-sm"
-              >
-                <Users className="w-4 h-4" />
-                View Other Batches
-              </button>
+              {batches.length > 1 && (
+                <button
+                  onClick={handleBackToBatches}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-xl transition-colors text-sm"
+                >
+                  <Users className="w-4 h-4" />
+                  View Other Batches
+                </button>
+              )}
             </div>
           </div>
         </main>
@@ -487,14 +607,14 @@ function MyBatchesContent() {
               className="px-4 sm:px-6 py-3 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400 bg-emerald-500/5 whitespace-nowrap"
             >
               <Calendar className="w-4 h-4 inline-block mr-2" />
-              My Batches
+              My Schedule
             </button>
             <button
               onClick={() => router.push('/your-attendance')}
               className="px-4 sm:px-6 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
             >
               <Award className="w-4 h-4 inline-block mr-2" />
-              Your Attendance
+              My Attendance
             </button>
             <button
               onClick={() => router.push('/xp-leaderboard')}

@@ -13,7 +13,7 @@ import {
 function YourAttendanceContent() {
   const router = useRouter()
   const { user, signOut } = useAuth()
-
+  
   const cohortName = user?.cohortType && user?.cohortNumber 
     ? `${user.cohortType.charAt(0).toUpperCase() + user.cohortType.slice(1)} ${user.cohortNumber}`
     : 'Your Cohort'
@@ -52,7 +52,7 @@ function YourAttendanceContent() {
                 <p className="text-slate-500 text-xs sm:text-sm">Student Dashboard</p>
               </div>
             </div>
-
+            
             <div className="flex items-center gap-2 sm:gap-4">
               <div className="hidden sm:block text-right">
                 <p className="text-white font-medium text-sm">{user?.name || 'Student'}</p>
@@ -73,32 +73,32 @@ function YourAttendanceContent() {
       <nav className="relative z-10 border-b border-white/5 bg-slate-900/30 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-            <button
-              onClick={() => router.push('/home')}
-              className="px-4 sm:px-6 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
-            >
-              <Home className="w-4 h-4 inline-block mr-2" />
-              Home
-            </button>
-            <button
-              onClick={() => router.push('/my-batches')}
-              className="px-4 sm:px-6 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
-            >
+              <button
+                onClick={() => router.push('/home')}
+                className="px-4 sm:px-6 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
+              >
+                <Home className="w-4 h-4 inline-block mr-2" />
+                Home
+              </button>
+              <button
+                onClick={() => router.push('/my-batches')}
+                className="px-4 sm:px-6 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
+              >
               <Calendar className="w-4 h-4 inline-block mr-2" />
-              My Batch
-            </button>
-            <button
+              My Schedule
+              </button>
+              <button
               className="px-4 sm:px-6 py-3 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400 bg-emerald-500/5 whitespace-nowrap"
-            >
-              <Award className="w-4 h-4 inline-block mr-2" />
-              Your Attendance
-            </button>
-            <button
-              onClick={() => router.push('/xp-leaderboard')}
-              className="px-4 sm:px-6 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
-            >
-              <Trophy className="w-4 h-4 inline-block mr-2" />
-              XP Leaderboard
+              >
+                <Award className="w-4 h-4 inline-block mr-2" />
+                My Attendance
+              </button>
+              <button
+                onClick={() => router.push('/xp-leaderboard')}
+                className="px-4 sm:px-6 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
+              >
+                <Trophy className="w-4 h-4 inline-block mr-2" />
+                XP Leaderboard
             </button>
           </div>
         </div>
@@ -109,7 +109,7 @@ function YourAttendanceContent() {
         {/* Header */}
         <div className="mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Your Attendance</h2>
-          <p className="text-slate-400">Track your class attendance and performance</p>
+            <p className="text-slate-400">Track your class attendance and performance</p>
         </div>
 
         {/* Attendance Records Component */}
