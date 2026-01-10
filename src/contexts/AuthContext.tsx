@@ -1,8 +1,14 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react'
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import type { Session, User } from '@supabase/supabase-js'
+
+// Create Supabase B client directly here to avoid import issues
+const supabaseB = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL_B!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_B!
+)
 
 export interface StudentUser {
   id: string
@@ -11,7 +17,11 @@ export interface StudentUser {
   name?: string
   cohortType?: string
   cohortNumber?: string
+  role?: string
 }
+
+// Expected role for this dashboard
+const REQUIRED_ROLE = 'student'
 
 interface AuthContextType {
   user: StudentUser | null
@@ -32,20 +42,15 @@ function userToStudent(user: User | null): StudentUser | null {
     enrollmentId: user.user_metadata?.enrollment_id,
     name: user.user_metadata?.student_name || user.user_metadata?.full_name || user.email?.split('@')[0],
     cohortType: user.user_metadata?.cohort_type,
-    cohortNumber: user.user_metadata?.cohort_number
+    cohortNumber: user.user_metadata?.cohort_number,
+    role: user.user_metadata?.role
   }
 }
 
-function getSupabaseClient(): SupabaseClient | null {
-  if (typeof window === 'undefined') return null
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL_B || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_B) {
-    console.warn('Supabase environment variables not set')
-    return null
-  }
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL_B,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_B
-  )
+// Check if user has the correct role for this dashboard
+function hasValidRole(user: User | null): boolean {
+  if (!user) return false
+  return user.user_metadata?.role === REQUIRED_ROLE
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -53,20 +58,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
-  
-  const supabaseB = useMemo(() => getSupabaseClient(), [])
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   useEffect(() => {
-    if (!mounted || !supabaseB) {
-      if (mounted && !supabaseB) {
-        setLoading(false)
-      }
-      return
-    }
+    if (!mounted) return
 
     let isCancelled = false
 
@@ -82,6 +80,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const result = await Promise.race([sessionPromise, timeoutPromise]) as any
         
         if (!isCancelled && result?.data?.session) {
+          // Check if user has the correct role
+          if (!hasValidRole(result.data.session.user)) {
+            console.warn('User does not have student role, signing out')
+            await supabaseB.auth.signOut()
+            setSession(null)
+            setUser(null)
+            setLoading(false)
+            return
+          }
           setSession(result.data.session)
           setUser(userToStudent(result.data.session.user))
         }
@@ -89,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Init auth error:', error)
       } finally {
         if (!isCancelled) {
-        setLoading(false)
+          setLoading(false)
         }
       }
     }
@@ -97,10 +104,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth()
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabaseB.auth.onAuthStateChange((event, newSession) => {
+    const { data: { subscription } } = supabaseB.auth.onAuthStateChange(async (event, newSession) => {
       if (isCancelled) return
       
       console.log('Auth event:', event)
+      
+      // Check role on sign in
+      if (newSession && !hasValidRole(newSession.user)) {
+        console.warn('User does not have student role, signing out')
+        await supabaseB.auth.signOut()
+        setSession(null)
+        setUser(null)
+        setLoading(false)
+        return
+      }
+      
       setSession(newSession)
       setUser(userToStudent(newSession?.user || null))
       setLoading(false)
@@ -110,34 +128,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isCancelled = true
       subscription.unsubscribe()
     }
-  }, [mounted, supabaseB])
+  }, [mounted])
 
   const signOut = async () => {
     try {
-      if (supabaseB) {
       await supabaseB.auth.signOut()
-      }
     } catch (error) {
       console.error('Sign out error:', error)
     }
-            setUser(null)
-            setSession(null)
+    setUser(null)
+    setSession(null)
   }
 
   const refreshAuth = async () => {
-    if (!supabaseB) return
     try {
       const { data } = await supabaseB.auth.getSession()
       if (data.session) {
+        // Also check role on refresh
+        if (!hasValidRole(data.session.user)) {
+          console.warn('User does not have student role, signing out')
+          await supabaseB.auth.signOut()
+          setSession(null)
+          setUser(null)
+          return
+        }
         setSession(data.session)
         setUser(userToStudent(data.session.user))
-          } else {
+      } else {
         setSession(null)
-          setUser(null)
-        }
+        setUser(null)
+      }
     } catch (error) {
       console.error('Refresh auth error:', error)
-  }
+    }
   }
 
   if (!mounted) {
@@ -164,4 +187,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
-} 
+}

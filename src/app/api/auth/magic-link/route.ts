@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
     const redirectUrl = `${origin}/home`
     
     const userData = {
+      role: 'student',
       enrollment_id: student['EnrollmentID'],
       student_name: student['Full Name'],
       cohort_type: student['Cohort Type'],
