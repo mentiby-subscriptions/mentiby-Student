@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import AuthWrapper from '@/components/auth/AuthWrapper'
-import { 
+import {
   Calendar, Clock, Video, FileText,
   LogOut, Loader2, RefreshCw, Home, Award, Trophy, Users,
   BookOpen, GraduationCap, ChevronLeft, ChevronRight, ExternalLink, MessageSquareHeart, Clapperboard
@@ -87,10 +87,10 @@ function HomePage() {
     today.setHours(0, 0, 0, 0)
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
-    
+
     const inputDate = new Date(dateStr + 'T00:00:00')
     inputDate.setHours(0, 0, 0, 0)
-    
+
     return {
       day: date.toLocaleDateString('en-US', { weekday: 'short' }),
       date: date.getDate(),
@@ -293,7 +293,7 @@ function HomePage() {
                       </div>
                       <h4 className="text-white font-medium mb-1 group-hover:text-emerald-300 transition-colors">{todaySession.subject}</h4>
                       <p className="text-slate-400 text-sm mb-4 line-clamp-2">{todaySession.topic || 'No topic specified'}</p>
-                      
+
                       {/* Join Button */}
                       {todaySession.meetingLink ? (
                         <a
@@ -480,7 +480,7 @@ function HomePage() {
                   })}
                 </div>
               </div>
-              
+
               {/* Navigation Arrows */}
               <div className="flex justify-center items-center gap-4 mt-4">
                 <button
@@ -489,11 +489,11 @@ function HomePage() {
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                
+
                 <span className="text-sm text-slate-400 min-w-[100px] text-center">
                   {dateOffset === 0 ? 'This week' : dateOffset > 0 ? `+${dateOffset} days` : `${dateOffset} days`}
                 </span>
-                
+
                 <button
                   onClick={() => navigateDates('next')}
                   className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-emerald-500/50 bg-slate-900 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 hover:border-emerald-400 transition-all shadow-lg hover:shadow-emerald-500/20"
@@ -505,6 +505,25 @@ function HomePage() {
           </div>
         )}
       </main>
+
+      {/* Logo - Bottom Left */}
+      <div className="fixed bottom-6 left-6 z-50 group">
+        <a
+          href="https://www.linkedin.com/in/techsas/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-sm hover:scale-125 transition-transform"
+        >
+          🤍
+        </a>
+        {/* Tooltip */}
+        <div className="absolute bottom-full left-1/2 -translate-x-1/3 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+          <div className="bg-black text-white text-[10px] italic px-2 py-1 rounded-lg whitespace-nowrap shadow-lg border border-white/10">
+            techsas
+          </div>
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-black rotate-45 border-r border-b border-white/10" />
+        </div>
+      </div>
     </div>
   )
 }

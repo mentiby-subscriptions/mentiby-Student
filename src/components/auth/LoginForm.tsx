@@ -378,7 +378,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         <div className="mt-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900/50 border border-slate-800/50 rounded-full">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-slate-500 text-xs">Secured with Supabase Auth</span>
+            <span className="text-slate-500 text-xs">Secured with Techsas Auth</span>
           </div>
         </div>
       </div>
